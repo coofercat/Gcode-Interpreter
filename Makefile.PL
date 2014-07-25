@@ -5,7 +5,7 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     NAME             => 'Gcode::Interpreter',
-    AUTHOR           => q{Ralph Bolton <cpan@coofercat.com>},
+    AUTHOR           => q{Ralph Bolton <coofercat@cpan.org>},
     VERSION_FROM     => 'lib/Gcode/Interpreter.pm',
     ABSTRACT_FROM    => 'lib/Gcode/Interpreter.pm',
     LICENSE          => 'perl',
