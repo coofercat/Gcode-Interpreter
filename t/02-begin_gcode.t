@@ -13,7 +13,7 @@ use Gcode::Interpreter;
 
 my $obj = Gcode::Interpreter->new();
 
-foreach my $test (sort keys $begin_gcode) {
+foreach my $test (sort keys %$begin_gcode) {
 	ok($obj->parse_line($test));
 	my $pos = $obj->position();
 	is_deeply($pos, $begin_gcode->{$test});
