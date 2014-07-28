@@ -6,7 +6,7 @@ use warnings;
 use Exporter;
 use vars qw($VERSION @ISA);
 
-$VERSION     = 1.00;
+$VERSION     = 1.0.1;
 @ISA         = qw(Exporter);
 
 use Gcode::Interpreter::Ultimaker;
