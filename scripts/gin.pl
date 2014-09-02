@@ -25,7 +25,7 @@ MAIN: {
 
   my $gin = Gin->new();
 
-  $gin->set_output_file($options->{'o'}) if($options->{'o'});
+  $gin->set_meta_file($options->{'o'}) if($options->{'o'});
   $gin->set_waypoints($options->{'w'}) if($options->{'w'} && $options->{'w'} =~ /^\d+$/);
   if($options->{'m'}) {
     if(!$gin->set_method($options->{'m'})) {

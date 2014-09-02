@@ -97,28 +97,35 @@ sub length_to_string {
 # is so that any readers always see a consistent file - albeit
 # possibly slightly out of date.
 sub update_meta {
-  my ($self, $data) = @_;
+  my ($self, $data, $waypoints_ref) = @_;
 
   return 0 if(!$self->{META_FILE});
 
-  my $meta = $self->{META_FILE};
+  my $meta_file = $self->{META_FILE};
 
-  my $tmp_meta = "$meta.tmp";
-  $tmp_meta =~ s/\/([^\/]+)$/.$1/;
+  my $tmp_meta = "$meta_file.tmp";
+  #$tmp_meta =~ s/\/([^\/]+)$/.$1/;
 
   if(!open(META, ">", $tmp_meta)) {
     print "Could not open meta file $tmp_meta to write to it: $!\n";
     return 0;
   }
 
-  my $json = $self->{JSON}->encode($data);
+  my $meta = {
+    'file' => $data,
+    'waypoints' => $waypoints_ref,
+  };
+
+  my $last_waypoint = ${$waypoints_ref}[$#{$waypoints_ref}];
+
+  my $json = $self->{JSON}->encode($meta);
   print META $json;
-  foreach my $key (sort keys %$data) {
-    print "$key: " . $data->{$key} . " ";
+  foreach my $key (sort keys %{$last_waypoint}) {
+    print "$key: " . $last_waypoint->{$key} . " ";
   }
   print "\n";
   close(META);
-  return rename($tmp_meta, $meta);
+  return rename($tmp_meta, $meta_file);
 }
 
 sub process_file {
@@ -137,6 +144,7 @@ sub process_file {
   my $gcode_read = 0;
   my $line_counter = 0;
   my $bytes_read = 0;
+  my @waypoints = ();
   while(<GCODE>) {
     my $line = $_;
     $bytes_read = $bytes_read + length($line);
@@ -151,6 +159,13 @@ sub process_file {
       # Time to dump out some meta. First, calculate what
       # we're going to say
       my $stats = $self->{INTERPRETER}->stats();
+
+      # Save out the waypoint first...
+      push @waypoints, {
+        'gcode' => $gcode_read,
+        'duration' => sprintf('%.2f',$stats->{'duration'}),
+        'extruded' => sprintf('%.2f',$stats->{'extruded'}),
+      };
       
       # Work out how far we are into the file and multiply
       # up the stats by the right amount
@@ -160,8 +175,8 @@ sub process_file {
       $stats->{'completed'} = sprintf('%.2f', ($bytes_read / $size_of_gcode) * 100);
       $stats->{'lines'} = sprintf('%d', $lines_read * $multiplier);
       $stats->{'gcode'} = sprintf('%d', $gcode_read * $multiplier);
-  
-      $self->update_meta($stats) if($self->{META_FILE});
+
+      $self->update_meta($stats, \@waypoints) if($self->{META_FILE});
       $line_counter = 0;
     }
   }
@@ -175,8 +190,8 @@ sub process_file {
   foreach my $thing ('duration','extruded') {
     $stats->{$thing} = sprintf('%.2f', $stats->{$thing});
   }
-  $self->update_meta($stats) if($self->{META_FILE});
-  printf("Estimated time to print: %s\nFilament required: %s\n", $self->time_to_string($stats->{'duration'}), $self->length_to_string($stats->{'extruded'}));
+  $self->update_meta($stats, \@waypoints) if($self->{META_FILE});
+  printf("Estimated time to print: %s (%d)\nFilament required: %s\n", $self->time_to_string($stats->{'duration'}), $stats->{'duration'}, $self->length_to_string($stats->{'extruded'}));
 } 
 
 1;
